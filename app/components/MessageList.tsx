@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Message } from '@prisma/client';
 import { useEffect, useRef, memo } from 'react';
@@ -88,4 +88,4 @@ const MessageList = memo(function MessageList({ messages, isTyping }: MessageLis
 // Nom d'affichage pour les outils de développement
 MessageList.displayName = 'MessageList';
 
-export default MessageList; 
+export default MessageList;

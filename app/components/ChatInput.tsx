@@ -5,14 +5,15 @@ import { useState, useRef, useEffect, memo } from 'react';
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
   isDisabled?: boolean;
+  value?: string; // Ajout du prop value
 }
 
 /**
  * Composant de saisie de message pour le chatbot
  * Mémorisé pour éviter des rendus inutiles
  */
-const ChatInput = memo(function ChatInput({ onSendMessage, isDisabled = false }: ChatInputProps) {
-  const [message, setMessage] = useState('');
+const ChatInput = memo(function ChatInput({ onSendMessage, isDisabled = false, value = '' }: ChatInputProps) {
+  const [message, setMessage] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus sur l'input au chargement du composant et quand il n'est plus désactivé
@@ -21,6 +22,11 @@ const ChatInput = memo(function ChatInput({ onSendMessage, isDisabled = false }:
       inputRef.current?.focus();
     }
   }, [isDisabled]);
+
+  // Met à jour le message lorsque la valeur change
+  useEffect(() => {
+    setMessage(value);
+  }, [value]);
 
   /**
    * Gère la soumission du formulaire
@@ -51,7 +57,9 @@ const ChatInput = memo(function ChatInput({ onSendMessage, isDisabled = false }:
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-3xl">
       <div className="relative flex items-center">
+        <label htmlFor="chat-input" className="text-black">Entrez votre message :</label>
         <input
+          id="chat-input"
           ref={inputRef}
           type="text"
           value={message}
@@ -92,4 +100,4 @@ const ChatInput = memo(function ChatInput({ onSendMessage, isDisabled = false }:
 // Nom d'affichage pour les outils de développement
 ChatInput.displayName = 'ChatInput';
 
-export default ChatInput; 
+export default ChatInput;

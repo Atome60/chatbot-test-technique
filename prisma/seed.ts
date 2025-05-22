@@ -1,66 +1,50 @@
 import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
-import { parse } from 'csv-parse/sync';
-import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
-// Fonction pour lire un fichier CSV
-function readCsvFile(filePath: string) {
-  const fileContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
-  return parse(fileContent, {
-    columns: true,
-    skip_empty_lines: true
-  });
-}
-
 async function main() {
-  try {
-    // Nettoyer les tables existantes
-    console.log('Nettoyage des tables existantes...');
-    await prisma.$transaction([
-      prisma.$executeRaw`DELETE FROM "Option"`,
-      prisma.$executeRaw`DELETE FROM "Location"`,
-      prisma.$executeRaw`DELETE FROM "Item"`
-    ]);
+  // Importer les options
+  const optionsPath = path.join(__dirname, '../data/options.csv');
+  const optionsData = fs.readFileSync(optionsPath, 'utf-8')
+    .split('\n')
+    .slice(1) // Ignorer l'en-tête
+    .filter(line => line.trim() !== '')
+    .map(line => {
+      const [id, name, description] = line.split(',');
+      return { id, name, description };
+    });
 
-    // Lire les données des fichiers CSV
-    const optionsData = readCsvFile(path.join(__dirname, '../data/options.csv'));
-    const locationsData = readCsvFile(path.join(__dirname, '../data/locations.csv'));
-    const itemsData = readCsvFile(path.join(__dirname, '../data/items.csv'));
+  await prisma.option.createMany({ data: optionsData });
 
-    // Insérer les options
-    console.log('Insertion des options...');
-    for (const option of optionsData) {
-      await prisma.$executeRaw`
-        INSERT INTO "Option" (id, name, description)
-        VALUES (${crypto.randomUUID()}, ${option.name}, ${option.description})
-      `;
-    }
+  // Importer les lieux
+  const locationsPath = path.join(__dirname, '../data/locations.csv');
+  const locationsData = fs.readFileSync(locationsPath, 'utf-8')
+    .split('\n')
+    .slice(1) // Ignorer l'en-tête
+    .filter(line => line.trim() !== '')
+    .map(line => {
+      const [id, name, type] = line.split(',');
+      return { id, name, type };
+    });
 
-    // Insérer les lieux
-    console.log('Insertion des lieux...');
-    for (const location of locationsData) {
-      await prisma.$executeRaw`
-        INSERT INTO "Location" (id, name, type)
-        VALUES (${crypto.randomUUID()}, ${location.name}, ${location.type})
-      `;
-    }
+  await prisma.location.createMany({ data: locationsData });
 
-    // Insérer les items
-    console.log('Insertion des items...');
-    for (const item of itemsData) {
-      await prisma.$executeRaw`
-        INSERT INTO "Item" (id, name, category)
-        VALUES (${crypto.randomUUID()}, ${item.name}, ${item.category})
-      `;
-    }
+  // Importer les items
+  const itemsPath = path.join(__dirname, '../data/items.csv');
+  const itemsData = fs.readFileSync(itemsPath, 'utf-8')
+    .split('\n')
+    .slice(1) // Ignorer l'en-tête
+    .filter(line => line.trim() !== '')
+    .map(line => {
+      const [id, name, category] = line.split(',');
+      return { id, name, category };
+    });
 
-    console.log('Base de données initialisée avec succès !');
-  } catch (error) {
-    console.error('Erreur lors de l\'initialisation de la base de données:', error);
-  }
+  await prisma.item.createMany({ data: itemsData });
+
+  console.log('Données importées avec succès !');
 }
 
 main()
@@ -70,4 +54,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-  }); 
+  });
